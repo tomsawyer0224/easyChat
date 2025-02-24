@@ -1,0 +1,7 @@
+#transformers==4.49.0
+#langchain-huggingface==0.1.2
+#langchain-core==0.3.37
+langchain==0.3.19
+streamlit==1.42.2
+langchain-community==0.3.18
+langchain-ollama==0.2.3
