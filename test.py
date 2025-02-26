@@ -19,6 +19,10 @@ async def start():
     value = settings["Model"]
     cl.user_session.set("model", value)
 
+@cl.on_settings_update
+async def on_su(settings):
+    cl.user_session.set("model", settings["Model"])
+
 @cl.on_message
 async def main(message: cl.Message):
     # Your custom logic goes here...
