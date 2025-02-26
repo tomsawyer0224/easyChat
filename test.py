@@ -1,6 +1,8 @@
 import chainlit as cl
 from chainlit.input_widget import Select
 
+def invoke(name: str):
+    return name
 
 @cl.on_chat_start
 async def start():
@@ -15,3 +17,13 @@ async def start():
         ]
     ).send()
     value = settings["Model"]
+    cl.user_session.set("model", value)
+
+@cl.on_message
+async def main(message: cl.Message):
+    # Your custom logic goes here...
+    model = cl.user_session.get("model")
+    # Send a response back to the user
+    await cl.Message(
+        content=invoke(model),
+    ).send()

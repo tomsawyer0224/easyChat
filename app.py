@@ -7,12 +7,6 @@ from typing import cast
 
 import chainlit as cl
 
-llm = ChatOllama(
-    model="llama3.1",
-    temperature=0,
-    # other params...
-)
-
 @cl.on_chat_start
 async def on_chat_start():
     model = ChatOllama(
