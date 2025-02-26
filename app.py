@@ -10,7 +10,8 @@ import chainlit as cl
 @cl.on_chat_start
 async def on_chat_start():
     model = ChatOllama(
-        model="llama3.2:1b",
+        #model="llama3.2:1b",
+        model="qwen2.5:0.5b",
         temperature=0.7
     )
     prompt = ChatPromptTemplate.from_messages(
