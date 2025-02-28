@@ -1,16 +1,25 @@
+# Use an appropriate base image, e.g., python:3.10-slim
 FROM python:3.12-slim
 
-RUN apt update && apt install -y curl && rm -rf /var/lib/apt/lists/*
+# Set environment variables (e.g., set Python to run in unbuffered mode)
+ENV PYTHONUNBUFFERED=1
+
+# install ollama and pull model
+RUN apt update && apt install -y curl && rm -rf /var/lib/apt/lists/* 
 RUN curl -fsSL https://ollama.com/install.sh | sh
+RUN ollama serve
+RUN sleep 10
+RUN ollama pull qwen2.5:0.5b
 
-# EXPOSE 11434
-# RUN ollama pull llama3.2:1b
-RUN ollama serve & \
-    sleep 10 && \
-    ollama pull qwen2.5:0.5b
+# Set the working directory
+WORKDIR /app
 
-WORKDIR /usr/src/app
-COPY . .
-RUN pip install -U pip
-RUN pip install -r requirements.txt
-CMD ["chainlit", "run", "app.py", "-w"]
+# Copy your application's requirements and install them
+COPY . . 
+
+# install dependencies
+RUN pip install -U pip && pip install -r requirements.txt
+
+EXPOSE 8080
+
+CMD ["python", "-m", "chainlit", "run", "app.py", "-h", "--host", "0.0.0.0","--port", "8080"]
