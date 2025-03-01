@@ -3,13 +3,11 @@ FROM python:3.12-slim
 
 # Set environment variables (e.g., set Python to run in unbuffered mode)
 ENV PYTHONUNBUFFERED=1
-
+ENV OLLAMA_HOST=0.0.0.0:11434
 # install ollama and pull model
 RUN apt update && apt install -y curl && rm -rf /var/lib/apt/lists/* 
 RUN curl -fsSL https://ollama.com/install.sh | sh
-RUN ollama serve
-RUN sleep 10
-RUN ollama pull qwen2.5:0.5b
+RUN ollama serve & sleep 10 && ollama pull qwen2.5:0.5b
 
 # Set the working directory
 WORKDIR /app
