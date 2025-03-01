@@ -20,4 +20,6 @@ RUN pip install -U pip && pip install -r requirements.txt
 
 EXPOSE 8080
 
-CMD ["python", "-m", "chainlit", "run", "app.py", "-h", "--host", "0.0.0.0","--port", "8080"]
+# CMD ["python", "-m", "chainlit", "run", "app.py", "-h", "--host", "0.0.0.0","--port", "8080"]
+# CMD ["/bin/bash"]
+CMD ["/bin/bash", "-c", "ollama serve & sleep 10 && chainlit run app.py -h --host 0.0.0.0 --port 8080"]
