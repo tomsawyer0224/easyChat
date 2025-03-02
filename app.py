@@ -6,14 +6,9 @@ from langchain.schema.runnable.config import RunnableConfig
 from typing import cast
 
 import chainlit as cl
+from chainlit.input_widget import Select, Slider
 
-@cl.on_chat_start
-async def on_chat_start():
-    model = ChatOllama(
-        #model="llama3.2:1b",
-        model="qwen2.5:0.5b",
-        temperature=0.7
-    )
+def init_model(settings):
     prompt = ChatPromptTemplate.from_messages(
         [
             (
@@ -30,9 +25,40 @@ async def on_chat_start():
             ("human", "{question}"),
         ]
     )
+
+    model = ChatOllama(
+        model=settings["model"],
+        temperature=settings["temperature"]
+    )
     runnable = prompt | model | StrOutputParser()
     cl.user_session.set("runnable", runnable)
 
+@cl.on_chat_start
+async def on_chat_start():
+    settings = await cl.ChatSettings(
+        [
+            Select(
+                id="model",
+                label="Ollama - Model",
+                values=["qwen2.5:0.5b", "llama3.2:1b"],
+                initial_index=0,
+            ),
+            Slider(
+                id="temperature",
+                label="Temperature",
+                initial=0.7,
+                min=0,
+                max=1,
+                step=0.1,
+            ),
+        ]
+    ).send()
+
+    init_model(settings)
+
+@cl.on_settings_update
+async def on_settings_update(settings):
+    init_model(settings)
 
 @cl.on_message
 async def on_message(message: cl.Message):
@@ -42,7 +68,7 @@ async def on_message(message: cl.Message):
 
     async for chunk in runnable.astream(
         {"question": message.content},
-        config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
+        # config=RunnableConfig(callbacks=[cl.LangchainCallbackHandler()]),
     ):
         await msg.stream_token(chunk)
 
