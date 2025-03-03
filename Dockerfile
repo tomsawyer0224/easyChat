@@ -1,27 +1,19 @@
-# Use an appropriate base image, e.g., python:3.10-slim
+# base image
 FROM python:3.12-slim
-
-# Set environment variables (e.g., set Python to run in unbuffered mode)
+# set environment variables
 ENV PYTHONUNBUFFERED=1
-# ENV OLLAMA_HOST=0.0.0.0:11434
-# install ollama and pull model
-RUN apt update && apt install -y curl && rm -rf /var/lib/apt/lists/* 
+# install ollama and pull models
+RUN apt update && apt install -y curl && rm -rf /var/lib/apt/lists/*
 RUN curl -fsSL https://ollama.com/install.sh | sh
 RUN ollama serve & sleep 10 && \
-    ollama pull qwen2.5:0.5b && \
-    ollama pull llama3.2:1b
-# Set the working directory
+	ollama pull llama3.2:1b 
+# set the working directory
 WORKDIR /app
-
-# Copy your application's requirements and install them
-COPY . . 
-
+# copy project to the image
+COPY . .
 # install dependencies
-# RUN pip install -U pip && pip install -r requirements.txt
-
 RUN pip install -U pip && pip install --no-cache-dir -r requirements.txt
+# expose a port so that chainlit can listen on
 EXPOSE 8080
-
-# CMD ["python", "-m", "chainlit", "run", "app.py", "-h", "--host", "0.0.0.0","--port", "8080"]
-# CMD ["/bin/bash"]
+# specify default commands
 CMD ["/bin/bash", "-c", "ollama serve & sleep 10 && chainlit run app.py -h --host 0.0.0.0 --port 8080"]

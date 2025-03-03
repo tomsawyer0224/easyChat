@@ -4,4 +4,4 @@ langchain-ollama==0.2.3
 langchain-core==0.3.40
 chainlit==2.2.1
 pydantic==2.10.6
-
+ollama==0.4.7
