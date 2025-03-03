@@ -1,7 +1,7 @@
 langchain==0.3.19
 langchain-community==0.3.18
 langchain-ollama==0.2.3
-chainlit==2.2.1
-
-pydantic==2.10.6
 langchain-core==0.3.40
+chainlit==2.2.1
+pydantic==2.10.6
+
