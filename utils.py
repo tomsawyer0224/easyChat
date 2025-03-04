@@ -45,6 +45,6 @@ def generate_Dockerfile(
         "EXPOSE 8080\n"
         "# specify default commands\n"
         'CMD ["/bin/bash", "-c", "ollama serve & sleep 10 && chainlit run app.py -h --host 0.0.0.0 --port 8080"]'
-    )    
+    )
     with open("Dockerfile", "w") as dockerfile:
         dockerfile.write(content)
