@@ -6,8 +6,13 @@ import chainlit as cl
 from chainlit.input_widget import Select, Slider
 
 from model import ChatModel
+from utils import parse_config, pull_model
 
 chatbot = ChatModel()
+
+config = parse_config("./config.yaml")
+models = config["models"]
+pull_model(models)
 
 @cl.on_chat_start
 async def on_chat_start():
@@ -16,7 +21,7 @@ async def on_chat_start():
             Select(
                 id="model",
                 label="Ollama - Model",
-                values=["llama3.2:1b", "qwen2.5:0.5b"],
+                values=models,
                 initial_index=0,
             ),
             Slider(

@@ -1,0 +1,1 @@
+docker run --name echat --rm -p 8080:8080 chatbot

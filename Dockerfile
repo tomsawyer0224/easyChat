@@ -6,7 +6,8 @@ ENV PYTHONUNBUFFERED=1
 RUN apt update && apt install -y curl && rm -rf /var/lib/apt/lists/*
 RUN curl -fsSL https://ollama.com/install.sh | sh
 RUN ollama serve & sleep 10 && \
-	ollama pull llama3.2:1b 
+	ollama pull llama3.2:1b && \
+	ollama pull gemma:2b 
 # set the working directory
 WORKDIR /app
 # copy project to the image
