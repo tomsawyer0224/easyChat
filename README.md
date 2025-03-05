@@ -31,7 +31,7 @@ source init.sh
 chainlit run app.py -w --port 8080
 ```
 
-5. Build a Docker image by running the command:
+5. Build a Docker image by running the command (on a terminal inside the 'easyChat' directory):
 ```
 python build_docker.py
 ```
