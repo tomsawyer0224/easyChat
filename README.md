@@ -1,6 +1,10 @@
 # easyChat
 
 A simple project to create a local chatbot.
+<p float="left">
+  <img src="demo/chatbot_1.png" width="49%" />
+  <img src="demo/chatbot_2.png" width="49%" />
+</p>
 
 ## Description
 
