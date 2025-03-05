@@ -48,7 +48,7 @@ docker run --name echat --rm -d -p 8080:8080 chatbot
 ```
 docker stop echat
 ```
-> [!Note]:
+> [!Note]
 > You can push the docker image to [Docker hub](https://hub.docker.com/) for future use.
 > Because of working on CPU, you should choose small Ollama models to build the chatbot (specify in the 'config.yaml' file).
 
