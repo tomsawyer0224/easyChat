@@ -15,48 +15,46 @@ This project creates a chatbot program that runs locally on CPU using the Langch
 
 ### How to use
 
-1. Open a Terminal and clone this repository:
+1. Open a terminal and clone this repository:
 
 ```
 git clone https://github.com/tomsawyer0224/easyChat.git
 cd easyChat
 ```
-2. Run the following command to create a virtual environment and install all requirements,
+2. Run the following command to create a virtual environment and install all requirements.
 ```
 source init.sh
 ```
-3. Modify the 'config.yaml' file if needed. By default, the chatbot is powered by 'llama3.2:1b' or 'gemma:2b'. When using, you can chose either of them.
-4. You can run the chatbot here using the below command, wait for a few seconds and open the url http://localhost:8080 on a web browser to use the application.
+3. Modify the 'config.yaml' file if needed. By default, the chatbot is powered by 'llama3.2:1b' or 'gemma:2b'. When using, you can choose either of them.
+4. You can use the command below to launch the chatbot, wait a few seconds, and then use a web browser to access the application at http://localhost:8080.
 ```
 chainlit run app.py -w --port 8080
 ```
-If you want to build a docker image, continue to step 5 (preferred).\
-5. Run the command to build a docker image
+Proceed to step 5 (recommended) if you wish to create a Docker image.\
+5. Build a Docker image by running the command:
 ```
 python build_docker.py
 ```
-* To start the chatbot, run command
+* To start the chatbot, run command:
 ```
 docker run --name echat --rm -p 8080:8080 chatbot
 ```
-or in background mode
+or in background mode:
 ```
 docker run --name echat --rm -d -p 8080:8080 chatbot
 ```
-* Open the url http://localhost:8080 on a web browser to use the chatbot.
+* Access the application at http://localhost:8080.
 * To stop the chatbot, run command:
 ```
 docker stop echat
 ```
 > [!Note]
-> You can push the docker image to [Docker hub](https://hub.docker.com/) for future use.
-> Because of working on CPU, you should choose small Ollama models to build the chatbot (specify in the 'config.yaml' file).
+> For later use, you can publish the docker image to [Docker hub](https://hub.docker.com/). Because the chatbot runs on CPU, you should build the chatbot using minimal Ollama models (specified in the 'config.yaml' file).
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
 ## Acknowledgments
 * [chainlit-langchain](https://docs.chainlit.io/integrations/langchain)
 * [chainlit-cookbook](https://github.com/Chainlit/cookbook/tree/main/aws-ecs-deployment)
-* [awesome-readme](https://github.com/matiassingers/awesome-readme)
