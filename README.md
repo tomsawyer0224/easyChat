@@ -32,7 +32,7 @@ source init.sh
 3. Modify the 'config.yaml' file if needed. By default, the chatbot is powered by 'llama3.2:1b' and 'gemma:2b' in the Ollama framework. When using it, you can choose either of them.
 4. You can use the command below to launch the chatbot, wait a few seconds, and then use a web browser to access the application at http://localhost:8080. Proceed to step 5 (recommended) if you wish to create a Docker image.
 ```
-chainlit run app.py -w --port 8080
+chainlit run app.py -w -h --port 8080
 ```
 
 5. Build a Docker image by running the command (on a terminal inside the 'easyChat' directory):
