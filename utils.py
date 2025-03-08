@@ -2,10 +2,13 @@ import ollama
 from typing import List
 import yaml
 
+
 def parse_config(config_file: str):
     with open("./config.yaml") as f:
         config = yaml.safe_load(f)
     return config
+
+
 def pull_model(models: List[str] = ["llama3.2:1b", "gemma:2b"]):
     """
     pull models from a list
@@ -13,10 +16,12 @@ def pull_model(models: List[str] = ["llama3.2:1b", "gemma:2b"]):
     existing_model = [m.model for m in ollama.list().models]
     for model in set(models) - set(existing_model):
         ollama.pull(model)
+
+
 def generate_Dockerfile(
-        base_image: str = "python:3.12-slim",
-        models: List[str] = ["llama3.2:1b", "gemma:2b"]
-    ):
+    base_image: str = "python:3.12-slim",
+    models: List[str] = ["llama3.2:1b", "gemma:2b"],
+):
     """
     generate Dockerfile
     """
@@ -33,9 +38,9 @@ def generate_Dockerfile(
         "# install ollama and pull models\n"
         "RUN apt update && apt install -y curl && rm -rf /var/lib/apt/lists/*\n"
         "RUN curl -fsSL https://ollama.com/install.sh | sh\n"
-        "RUN ollama serve & sleep 10 && \\\n" + \
-        pull_model_command + \
-        "# set the working directory\n"
+        "RUN ollama serve & sleep 10 && \\\n"
+        + pull_model_command
+        + "# set the working directory\n"
         "WORKDIR /app\n"
         "# copy project to the image\n"
         "COPY . .\n"

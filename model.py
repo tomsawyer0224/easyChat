@@ -21,6 +21,7 @@ SYSTEM_MESSAGE = (
     "If you don't know the answer to a question, please don't share false information."
 )
 
+
 class InMemoryHistory(BaseChatMessageHistory, BaseModel):
     """In memory implementation of chat message history."""
 
@@ -32,6 +33,7 @@ class InMemoryHistory(BaseChatMessageHistory, BaseModel):
 
     def clear(self) -> None:
         self.messages = []
+
 
 class ChatModel:
     def __init__(self):
@@ -45,17 +47,18 @@ class ChatModel:
                 ("human", "{question}"),
             ]
         )
+
     def get_session_history(self, session_id: str) -> BaseChatMessageHistory:
         if session_id not in self.store:
             self.store[session_id] = InMemoryHistory()
         return self.store[session_id]
+
     def update(self, settings: cl.ChatSettings):
         """
         update model from chainlit ChatSettings (with keys are 'model', 'temperature')
         """
         self.model = ChatOllama(
-            model=settings["model"],
-            temperature=settings["temperature"]
+            model=settings["model"], temperature=settings["temperature"]
         )
         chain = self.prompt | self.model | self.output_parser
         runnable = RunnableWithMessageHistory(
