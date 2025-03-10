@@ -4,6 +4,7 @@ from langchain.schema import StrOutputParser
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.messages import BaseMessage
 from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.runnables import ConfigurableField
 
 from pydantic import BaseModel, Field
 from uuid import uuid4
@@ -26,29 +27,36 @@ SYSTEM_MESSAGE = (
 class ModelStore:
     def __init__(self):
         self.models = {}
-    def update(self, model: str):
+    def deliver_to_user(self, model: str):
+        """updates the model store and returns a ChatOllama model"""
         if model not in self.models.keys():
-            self.models[model] = ChatOllama(model = model)
+            self.models[model] = ChatOllama(model = model).configurable_fields(
+                temperature=ConfigurableField(
+                    id="temperature",
+                    name="LLM Temperature",
+                    description="The temperature of the LLM",
+                )
+            )
+        return self.models[model]
     @property
     def all_models(self):
         return self.models
 
-def get_model_from_store(model: str, model_store: ModelStore):
-    model_store.update(model)
-    return model_store.all_models[model]
-
 
 class UserSession:
-    def __init__(self, model: str, temperature: float, model_store: ModelStore):
-        self.model_name = model
-        self.model_store = model_store
+    def __init__(self, model: ChatOllama, temperature: float):
         self.session_id = uuid4().hex
-        self.model = get_model_from_store(model, self.model_store)
+        self.model = model
         self.temperature = temperature
-    def update(self, model: str):
-        model != self.model_name:
-        self.model_name = model
-        self.model = get_model_from_store(model, self.model_store)
+    @classmethod
+    def from_settings(cls, settings: cl.ChatSettings, model_store: ModelStore):
+        return cls(
+            model = model_store.deliver_to_user(settings["model"]),
+            temperature = settings["temperature"]
+        )
+    def update(self, settings: cl.ChatSettings, model_store: ModelStore):
+        self.model = model_store.deliver_to_user(settings["model"])
+        self.temperature = settings["temperature"]
     @property
     def info(self):
         return dict(
