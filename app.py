@@ -54,20 +54,5 @@ async def on_settings_update(settings):
 
 @cl.on_message
 async def on_message(message: cl.Message):
-    session_info = cl.user_session.get("session").info
-    runnable = session_info["runnable"]
-    session_id = session_info["session_id"]
-    temperature = session_info["temperature"]
-    runnable = cast(
-        RunnableWithMessageHistory, runnable
-    )  # type: RunnableWithMessageHistory
-    
-    msg = cl.Message(content="")
-
-    async for chunk in runnable.with_config({"temperature": temperature}).astream(
-        {"question": message.content},
-        config={"configurable": {"session_id": session_id}},
-    ):
-        await msg.stream_token(chunk)
-
-    await msg.send()
+    session = cast(Session, cl.user_session.get("session"))
+    await session.response(message)

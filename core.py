@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from uuid import uuid4
 
 import chainlit as cl
-from typing import List, Tuple, Callable
+from typing import List, Callable
 from functools import partial
 
 SYSTEM_MESSAGE = (
@@ -39,12 +39,12 @@ class InMemoryHistory(BaseChatMessageHistory, BaseModel):
 
 
 class ModelStore:
-    """stores Ollama model"""
+    """stores Ollama models"""
     def __init__(self):
         self.models = {}
 
     def deliver_to_user(self, model: str):
-        """returns specific model"""
+        """returns a specific model"""
         if model not in self.models.keys():
             self.models[model] = ChatOllama(model=model).configurable_fields(
                 temperature=ConfigurableField(
@@ -66,7 +66,7 @@ class ConversationStore:
         self.conversations = {}
 
     def deliver_to_user(self, session_id):
-        """returns specific conversation"""
+        """returns a specific conversation"""
         if session_id not in self.conversations.keys():
             self.conversations[session_id] = InMemoryHistory()
         return self.conversations[session_id]
@@ -77,7 +77,7 @@ class ConversationStore:
 
 
 class Session:
-    """chat session for each user"""
+    """chat session, responsible for storing session_id, settings, and answer the human's question"""
     def __init__(self, model: ChatOllama, temperature: float, get_session_history: Callable):
         """This method is not used to create an instance direcly"""
         self.session_id = uuid4().hex
@@ -130,10 +130,16 @@ class Session:
             history_messages_key="history",
         )
 
-    @property
-    def info(self):
-        return dict(
-            session_id=self.session_id, runnable=self.runnable, temperature=self.temperature
-        )
+    async def response(self, message: cl.Message):
+        """response a human message"""
+        bot_message = cl.Message(content="")
+        async for chunk in self.runnable.with_config({"temperature": self.temperature}).astream(
+            {"question": message.content},
+            config={"configurable": {"session_id": self.session_id}},
+        ):
+            await bot_message.stream_token(chunk)
+
+        await bot_message.send()
+
 
 
