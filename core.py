@@ -133,6 +133,7 @@ class Session:
     async def response(self, message: cl.Message):
         """response a human message"""
         bot_message = cl.Message(content="")
+        # print(self.temperature)
         async for chunk in self.runnable.with_config({"temperature": self.temperature}).astream(
             {"question": message.content},
             config={"configurable": {"session_id": self.session_id}},
