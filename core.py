@@ -44,7 +44,7 @@ class ModelStore:
         self.models = {}
 
     def deliver_to_user(self, model: str):
-        """returns a specific model"""
+        """returns a specific model from model's name"""
         if model not in self.models.keys():
             # creates a new model with confgurable field 'temperature' that we can pass at runtime
             self.models[model] = ChatOllama(model=model).configurable_fields(
@@ -79,10 +79,11 @@ class ConversationStore:
 
 class Session:
     """chat session: stores session_id, settings, runnable, and answer the human's question"""
-    def __init__(self, model: ChatOllama, temperature: float, get_session_history: Callable):
+    def __init__(self, model: ChatOllama, temperature: float, get_session_history: Callable, model_name: str):
         """This method is not used to create an instance direcly"""
         self.session_id = uuid4().hex
         # self.model = model
+        self.model_name = model_name
         self.temperature = temperature
         self.get_session_history = get_session_history
         self.output_parser = StrOutputParser()
@@ -101,7 +102,7 @@ class Session:
             input_messages_key="question",
             history_messages_key="history",
         ).with_config({"temperature": self.temperature})
-        # with_config means the 'temperature' is passed here will also pass to the model
+        # with_config means the 'temperature' is passed here will change the model's temperature at runtime
 
     @classmethod
     def create(
@@ -117,23 +118,26 @@ class Session:
         return cls(
             model=model_store.deliver_to_user(settings["model"]),
             temperature=settings["temperature"],
-            get_session_history=get_session_history
+            get_session_history=get_session_history,
+            model_name = settings["model"]
         )
 
     def update(self, settings: cl.ChatSettings, model_store: ModelStore):
-        """updates a session when the settings is changed, eg: change model or temperature"""
-        # self.model = model_store.deliver_to_user(settings["model"])
-        model = model_store.deliver_to_user(settings["model"])
-        self.temperature = settings["temperature"]
+        """updates a session when the settings is changed, eg: 'model' or 'temperature'"""
+        # update runnable if changing model
+        if self.model_name != settings["model"]:
+            model = model_store.deliver_to_user(settings["model"])
+            chain = self.prompt | model | self.output_parser
+            self.runnable = RunnableWithMessageHistory(
+                chain,
+                self.get_session_history,
+                input_messages_key="question",
+                history_messages_key="history",
+            ).with_config({"temperature": self.temperature})
         
-        # chain = self.prompt | self.model | self.output_parser
-        chain = self.prompt | model | self.output_parser
-        self.runnable = RunnableWithMessageHistory(
-            chain,
-            self.get_session_history,
-            input_messages_key="question",
-            history_messages_key="history",
-        ).with_config({"temperature": self.temperature})
+        # update temperature
+        self.temperature = settings["temperature"]
+
 
     async def response(self, message: cl.Message):
         """response a human message"""
@@ -145,11 +149,3 @@ class Session:
             await bot_message.stream_token(chunk)
 
         await bot_message.send()
-
-    # @property
-    # def info(self):
-    #     return {
-    #         "session_id": self.session_id,
-    #         "runnable": self.runnable,
-    #         "temperature": self.temperature
-    #     }
