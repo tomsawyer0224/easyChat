@@ -37,11 +37,10 @@ async def on_chat_start():
         ]
     ).send()
 
-
     session = Session.create(
-        settings = settings,
-        model_store = model_store,
-        conversation_store = conversation_store
+        settings=settings,
+        model_store=model_store,
+        conversation_store=conversation_store,
     )
     cl.user_session.set("session", session)
 

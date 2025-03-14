@@ -53,7 +53,8 @@ docker run --name echat --rm -d -p 8080:8080 chatbot
 docker stop echat
 ```
 > [!Note]
-> For later use, you can publish the docker image to [Docker hub](https://hub.docker.com/). Because the chatbot runs on CPU, you should build the chatbot using minimal Ollama models (specified in the 'config.yaml' file).
+> For later use, you can publish the docker image to [Docker hub](https://hub.docker.com/). Because the chatbot runs on CPU, you should build the chatbot using minimal Ollama models (specified in the 'config.yaml' file).\
+> The chatbot will generate varied responses to identical questions, even with the temperature set to zero, due to its retention of the entire conversation history.
 
 ## License
 
@@ -62,3 +63,4 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 ## Acknowledgments
 * [chainlit-langchain](https://docs.chainlit.io/integrations/langchain)
 * [chainlit-cookbook](https://github.com/Chainlit/cookbook/tree/main/aws-ecs-deployment)
+* [langchain-runnable](https://python.langchain.com/api_reference/core/runnables/langchain_core.runnables.history.RunnableWithMessageHistory.html)

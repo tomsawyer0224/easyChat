@@ -40,6 +40,7 @@ class InMemoryHistory(BaseChatMessageHistory, BaseModel):
 
 class ModelStore:
     """stores Ollama models"""
+
     def __init__(self):
         self.models = {}
 
@@ -63,6 +64,7 @@ class ModelStore:
 
 class ConversationStore:
     """stores conversations"""
+
     def __init__(self):
         self.conversations = {}
 
@@ -79,7 +81,14 @@ class ConversationStore:
 
 class Session:
     """chat session: stores session_id, settings, runnable, and answer the human's question"""
-    def __init__(self, model: ChatOllama, temperature: float, get_session_history: Callable, model_name: str):
+
+    def __init__(
+        self,
+        model: ChatOllama,
+        temperature: float,
+        get_session_history: Callable,
+        model_name: str,
+    ):
         """This method is not used to create an instance direcly"""
         self.session_id = uuid4().hex
         # self.model = model
@@ -112,14 +121,16 @@ class Session:
         conversation_store: ConversationStore,
     ):
         """method to create a Session instance"""
+
         def get_conversation_from_store(conversation_store, session_id):
             return conversation_store.deliver_to_user(session_id)
+
         get_session_history = partial(get_conversation_from_store, conversation_store)
         return cls(
             model=model_store.deliver_to_user(settings["model"]),
             temperature=settings["temperature"],
             get_session_history=get_session_history,
-            model_name = settings["model"]
+            model_name=settings["model"],
         )
 
     def update(self, settings: cl.ChatSettings, model_store: ModelStore):
@@ -134,10 +145,9 @@ class Session:
                 input_messages_key="question",
                 history_messages_key="history",
             ).with_config({"temperature": self.temperature})
-        
+
         # update temperature
         self.temperature = settings["temperature"]
-
 
     async def response(self, message: cl.Message):
         """response a human message"""
