@@ -2,9 +2,11 @@ from langgraph.prebuilt import create_react_agent
 from langchain_ollama import ChatOllama
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage
-import chainlit as cl
 
-from utils import save_graph
+import chainlit as cl
+from chainlit.input_widget import Select, Slider
+
+from utils import parse_config, pull_model
 
 SYSTEM_MESSAGE = (
     "You are a helpful, respectful and honest assistant. "
@@ -18,6 +20,30 @@ SYSTEM_MESSAGE = (
     "You don't need to use tool for every query, only use when searching current events."
 )
 model = ChatOllama(model="llama3.2:1b")
+config = parse_config("./config.yaml")
+models = config["models"]
+pull_model(models)
+
+@cl.on_chat_start
+async def on_chat_start():
+    settings = await cl.ChatSettings(
+        [
+            Select(
+                id="model",
+                label="Ollama - Model",
+                values=models,
+                initial_index=0,
+            ),
+            Slider(
+                id="temperature",
+                label="Temperature",
+                initial=0.7,
+                min=0,
+                max=1,
+                step=0.1,
+            ),
+        ]
+    ).send()
 
 graph = create_react_agent(
     model=model,
@@ -26,7 +52,6 @@ graph = create_react_agent(
     prompt=SYSTEM_MESSAGE,
     checkpointer=MemorySaver()
 )
-# save_graph(graph, "cl_chatbot.png")
 
 @cl.on_message
 async def on_message(msg: cl.Message):
@@ -35,10 +60,10 @@ async def on_message(msg: cl.Message):
     final_answer = cl.Message(content="")
     
     for msg, metadata in graph.stream({"messages": [HumanMessage(content=msg.content)]}, stream_mode="messages", config=config):
-        if (
-            msg.content
-            and not isinstance(msg, HumanMessage)
-        ):
+        if msg.content:
+            print(f"***msg***: {msg}")
+            print(f"***metadata***: {metadata}")
+            print("-"*30)
             await final_answer.stream_token(msg.content)
 
     await final_answer.send()
