@@ -8,4 +8,5 @@ chainlit==2.2.1
 ollama==0.4.8
 typing_extensions==4.13.2
 pillow==11.1.0
-duckduckgo-search==8.0.0
+
+
