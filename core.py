@@ -57,11 +57,9 @@ def chatbot(state: State, config: RunnableConfig = None):
     response = llm.invoke(
         [SystemMessage(content=system_prompt)] + state["messages"]
     )
-    # msg = [SystemMessage(content=system_prompt)] + state["messages"]
-    # print(f"***msg***\n{msg}")
-    response = llm.invoke(msg)
     return {"messages": [response]}
 
 builder.add_edge(START, "chatbot")
 builder.add_node("chatbot", chatbot)
 builder.add_edge("chatbot", END)
+

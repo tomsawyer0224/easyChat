@@ -8,7 +8,7 @@ A simple project to create a local chatbot.
 
 ## Description
 
-This project creates a chatbot program that runs locally on CPU using the Langchain, Ollama, and Chainlit frameworks.
+This project creates a chatbot program that runs locally on CPU using the LangGraph, Ollama, and Chainlit frameworks.
 
 ## Getting Started
 
@@ -61,6 +61,7 @@ docker stop echat
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
 
 ## Acknowledgments
-* [chainlit-langchain](https://docs.chainlit.io/integrations/langchain)
+* [chainlit-langgraph](https://docs.chainlit.io/integrations/langchain)
 * [chainlit-cookbook](https://github.com/Chainlit/cookbook/tree/main/aws-ecs-deployment)
 * [langchain-runnable](https://python.langchain.com/api_reference/core/runnables/langchain_core.runnables.history.RunnableWithMessageHistory.html)
+* [react-agent](https://github.com/langchain-ai/react-agent/tree/main)
