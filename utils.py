@@ -54,10 +54,10 @@ def generate_Dockerfile(
         "COPY . .\n"
         "# install dependencies\n"
         "RUN pip install -U pip && pip install --no-cache-dir -r requirements.txt\n"
-        "# expose a port so that streamlit can listen on\n"
-        "EXPOSE 8501\n"
-        "# specify default commands\n"
-        'CMD ["/bin/bash", "-c", "ollama serve & sleep 10 && streamlit run app.py --server.port 8501 --server.headless true"]'
+        # expose a port so that chainlit can listen on
+        EXPOSE 8080
+        # specify default commands
+        CMD ["/bin/bash", "-c", "ollama serve & sleep 10 && chainlit run app.py -h --host 0.0.0.0 --port 8080"]
     )
     with open("Dockerfile", "w") as dockerfile:
         dockerfile.write(content)
