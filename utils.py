@@ -38,7 +38,7 @@ def generate_Dockerfile(
     for i in range(n_model):
         end = "\n" if i == n_model - 1 else "&& \\\n"
         pull_model_command += f"\tollama pull {models[i]} {end}"
-    content = (
+        content = (
         "# base image\n"
         f"FROM {base_image}\n"
         "# set environment variables\n"
