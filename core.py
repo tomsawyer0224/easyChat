@@ -1,19 +1,16 @@
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from typing import Annotated, Optional
+from typing_extensions import TypedDict
+
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
+from langchain_core.runnables import RunnableConfig, ensure_config
+from langchain_core.messages import SystemMessage
+
 from langchain_ollama import ChatOllama
-from langchain.schema import StrOutputParser
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_core.messages import BaseMessage
-from langchain_core.chat_history import BaseChatMessageHistory
-from langchain_core.runnables import ConfigurableField
 
-from pydantic import BaseModel, Field
-from uuid import uuid4
+from dataclasses import dataclass, field, fields
 
-import chainlit as cl
-from typing import List, Callable
-from functools import partial
-
-SYSTEM_MESSAGE = (
+SYSTEM_PROMPT = (
     "You are a helpful, respectful and honest assistant. "
     "Always answer as helpfully as possible, while being safe. "
     "Your answers should not include any harmful, unethical, "
@@ -24,138 +21,47 @@ SYSTEM_MESSAGE = (
     "If you don't know the answer to a question, please don't share false information."
 )
 
+@dataclass(kw_only=True)
+class Configuration:
+    """The configuration for the agent."""
 
-class InMemoryHistory(BaseChatMessageHistory, BaseModel):
-    """In memory implementation of chat message history."""
-
-    messages: List[BaseMessage] = Field(default_factory=list)
-
-    def add_messages(self, messages: List[BaseMessage]) -> None:
-        """Add a list of messages to the store"""
-        self.messages.extend(messages)
-
-    def clear(self) -> None:
-        self.messages = []
-
-
-class ModelStore:
-    """stores Ollama models"""
-
-    def __init__(self):
-        self.models = {}
-
-    def deliver_to_user(self, model: str):
-        """returns a specific model from model's name"""
-        if model not in self.models.keys():
-            # creates a new model with confgurable field 'temperature' that we can pass at runtime
-            self.models[model] = ChatOllama(model=model).configurable_fields(
-                temperature=ConfigurableField(
-                    id="temperature",
-                    name="LLM Temperature",
-                    description="The temperature of the LLM",
-                )
-            )
-        return self.models[model]
-
-    @property
-    def all_models(self):
-        return self.models
-
-
-class ConversationStore:
-    """stores conversations"""
-
-    def __init__(self):
-        self.conversations = {}
-
-    def deliver_to_user(self, session_id):
-        """returns a specific conversation"""
-        if session_id not in self.conversations.keys():
-            self.conversations[session_id] = InMemoryHistory()
-        return self.conversations[session_id]
-
-    @property
-    def all_conversations(self):
-        return self.conversations
-
-
-class Session:
-    """chat session: stores session_id, settings, runnable, and answer the human's question"""
-
-    def __init__(
-        self,
-        model: ChatOllama,
-        temperature: float,
-        get_session_history: Callable,
-        model_name: str,
-    ):
-        """This method is not used to create an instance direcly"""
-        self.session_id = uuid4().hex
-        # self.model = model
-        self.model_name = model_name
-        self.temperature = temperature
-        self.get_session_history = get_session_history
-        self.output_parser = StrOutputParser()
-        self.prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", SYSTEM_MESSAGE),
-                MessagesPlaceholder(variable_name="history"),
-                ("human", "{question}"),
-            ]
-        )
-        # chain = self.prompt | self.model | self.output_parser
-        chain = self.prompt | model | self.output_parser
-        self.runnable = RunnableWithMessageHistory(
-            chain,
-            self.get_session_history,
-            input_messages_key="question",
-            history_messages_key="history",
-        ).with_config({"temperature": self.temperature})
-        # with_config means the 'temperature' is passed here will change the model's temperature at runtime
+    system_prompt: str = SYSTEM_PROMPT
+    model: str = "llama3.2:1b"
+    temperature: float = 0.7
 
     @classmethod
-    def create(
-        cls,
-        settings: cl.ChatSettings,
-        model_store: ModelStore,
-        conversation_store: ConversationStore,
-    ):
-        """method to create a Session instance"""
+    def from_runnable_config(
+        cls, config: Optional[RunnableConfig] = None
+    ) -> "Configuration":
+        """Create a Configuration instance from a RunnableConfig object."""
+        config = ensure_config(config)
+        configurable = config.get("configurable") or {}
+        _fields = {f.name for f in fields(cls) if f.init}
+        return cls(**{k: v for k, v in configurable.items() if k in _fields})
 
-        def get_conversation_from_store(conversation_store, session_id):
-            return conversation_store.deliver_to_user(session_id)
+class State(TypedDict):
+    # Messages have the type "list". The `add_messages` function
+    # in the annotation defines how this state key should be updated
+    # (in this case, it appends messages to the list, rather than overwriting them)
+    messages: Annotated[list, add_messages]
 
-        get_session_history = partial(get_conversation_from_store, conversation_store)
-        return cls(
-            model=model_store.deliver_to_user(settings["model"]),
-            temperature=settings["temperature"],
-            get_session_history=get_session_history,
-            model_name=settings["model"],
-        )
+builder = StateGraph(State)
 
-    def update(self, settings: cl.ChatSettings, model_store: ModelStore):
-        """updates a session when the settings is changed, eg: 'model' or 'temperature'"""
-        # update runnable if changing model
-        if self.model_name != settings["model"]:
-            model = model_store.deliver_to_user(settings["model"])
-            chain = self.prompt | model | self.output_parser
-            self.runnable = RunnableWithMessageHistory(
-                chain,
-                self.get_session_history,
-                input_messages_key="question",
-                history_messages_key="history",
-            ).with_config({"temperature": self.temperature})
+def chatbot(state: State, config: RunnableConfig = None):
+    runtime_config = Configuration.from_runnable_config(config)
+    system_prompt = runtime_config.system_prompt
+    model = runtime_config.model
+    temperature = runtime_config.temperature
+    llm = ChatOllama(model=model, temperature=temperature)
 
-        # update temperature
-        self.temperature = settings["temperature"]
+    response = llm.invoke(
+        [SystemMessage(content=system_prompt)] + state["messages"]
+    )
+    # msg = [SystemMessage(content=system_prompt)] + state["messages"]
+    # print(f"***msg***\n{msg}")
+    response = llm.invoke(msg)
+    return {"messages": [response]}
 
-    async def response(self, message: cl.Message):
-        """response a human message"""
-        bot_message = cl.Message(content="")
-        async for chunk in self.runnable.astream(
-            {"question": message.content},
-            config={"configurable": {"session_id": self.session_id}},
-        ):
-            await bot_message.stream_token(chunk)
-
-        await bot_message.send()
+builder.add_edge(START, "chatbot")
+builder.add_node("chatbot", chatbot)
+builder.add_edge("chatbot", END)

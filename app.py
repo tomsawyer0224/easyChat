@@ -1,20 +1,17 @@
-from typing import cast
-
-from langchain_core.runnables.history import RunnableWithMessageHistory
-
+from langgraph.checkpoint.memory import MemorySaver
+from langchain_core.messages import HumanMessage
 import chainlit as cl
 from chainlit.input_widget import Select, Slider
 
-from core import ModelStore, ConversationStore, Session
+from core import builder
 from utils import parse_config, pull_model
 
-model_store = ModelStore()
-conversation_store = ConversationStore()
+graph = builder.compile(checkpointer=MemorySaver())
+
 
 config = parse_config("./config.yaml")
 models = config["models"]
 pull_model(models)
-
 
 @cl.on_chat_start
 async def on_chat_start():
@@ -36,23 +33,33 @@ async def on_chat_start():
             ),
         ]
     ).send()
-
-    session = Session.create(
-        settings=settings,
-        model_store=model_store,
-        conversation_store=conversation_store,
-    )
-    cl.user_session.set("session", session)
-
+    config = {
+        "configurable":{
+            "thread_id": cl.context.session.id,
+            "model": settings["model"],
+            "temperature": settings["temperature"]
+        }
+    }
+    cl.user_session.set("config", config)
 
 @cl.on_settings_update
-async def on_settings_update(settings):
-    session = cast(Session, cl.user_session.get("session"))
-    session.update(settings=settings, model_store=model_store)
-    cl.user_session.set("session", session)
-
+async def update(settings):
+    config = cl.user_session.get("config")
+    config["configurable"]["model"] = settings["model"]
+    config["configurable"]["temperature"] = settings["temperature"]
+    cl.user_session.set("config", config)
 
 @cl.on_message
-async def on_message(message: cl.Message):
-    session = cast(Session, cl.user_session.get("session"))
-    await session.response(message)
+async def on_message(msg: cl.Message):
+    config = cl.user_session.get("config")
+    final_answer = cl.Message(content="")
+    
+    for msg, _ in graph.stream(
+        {"messages": [{"role": "user", "content": msg.content}]}, 
+        config=config,
+        stream_mode="messages"
+    ):
+        if msg.content:
+            await final_answer.stream_token(msg.content)
+
+    await final_answer.send()
