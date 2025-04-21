@@ -5,11 +5,13 @@ from PIL import Image
 from io import BytesIO
 from langgraph.graph.state import CompiledStateGraph
 
+
 def save_graph(graph: CompiledStateGraph, file_path: str):
     """visualize a graph by a .png image file"""
     img_in_byte = graph.get_graph().draw_mermaid_png()
     with Image.open(BytesIO(img_in_byte)) as img:
         img.save(file_path)
+
 
 def parse_config(config_file: str):
     with open("./config.yaml") as f:

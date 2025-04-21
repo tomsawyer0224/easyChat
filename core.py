@@ -21,6 +21,7 @@ SYSTEM_PROMPT = (
     "If you don't know the answer to a question, please don't share false information."
 )
 
+
 @dataclass(kw_only=True)
 class Configuration:
     """The configuration for the agent."""
@@ -39,13 +40,16 @@ class Configuration:
         _fields = {f.name for f in fields(cls) if f.init}
         return cls(**{k: v for k, v in configurable.items() if k in _fields})
 
+
 class State(TypedDict):
     # Messages have the type "list". The `add_messages` function
     # in the annotation defines how this state key should be updated
     # (in this case, it appends messages to the list, rather than overwriting them)
     messages: Annotated[list, add_messages]
 
+
 builder = StateGraph(State)
+
 
 def chatbot(state: State, config: RunnableConfig = None):
     runtime_config = Configuration.from_runnable_config(config)
@@ -54,12 +58,10 @@ def chatbot(state: State, config: RunnableConfig = None):
     temperature = runtime_config.temperature
     llm = ChatOllama(model=model, temperature=temperature)
 
-    response = llm.invoke(
-        [SystemMessage(content=system_prompt)] + state["messages"]
-    )
+    response = llm.invoke([SystemMessage(content=system_prompt)] + state["messages"])
     return {"messages": [response]}
+
 
 builder.add_edge(START, "chatbot")
 builder.add_node("chatbot", chatbot)
 builder.add_edge("chatbot", END)
-

@@ -12,6 +12,7 @@ config = parse_config("./config.yaml")
 models = config["models"]
 pull_model(models)
 
+
 @cl.on_chat_start
 async def on_chat_start():
     settings = await cl.ChatSettings(
@@ -33,13 +34,14 @@ async def on_chat_start():
         ]
     ).send()
     config = {
-        "configurable":{
+        "configurable": {
             "thread_id": cl.context.session.id,
             "model": settings["model"],
-            "temperature": settings["temperature"]
+            "temperature": settings["temperature"],
         }
     }
     cl.user_session.set("config", config)
+
 
 @cl.on_settings_update
 async def update(settings):
@@ -48,15 +50,16 @@ async def update(settings):
     config["configurable"]["temperature"] = settings["temperature"]
     cl.user_session.set("config", config)
 
+
 @cl.on_message
 async def on_message(msg: cl.Message):
     config = cl.user_session.get("config")
     final_answer = cl.Message(content="")
-    
+
     for msg, _ in graph.stream(
-        {"messages": [{"role": "user", "content": msg.content}]}, 
+        {"messages": [{"role": "user", "content": msg.content}]},
         config=config,
-        stream_mode="messages"
+        stream_mode="messages",
     ):
         if msg.content:
             await final_answer.stream_token(msg.content)
